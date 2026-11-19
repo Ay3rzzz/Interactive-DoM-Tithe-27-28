@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Interactive Tithe Model | McMaster Medicine</title>
+  <meta name="description" content="Compare estimated annual tithe under McMaster Medicine’s Current Model and 2027–28 Academic Year Model.">
+  <style>
+    body { margin: 0; padding: clamp(16px, 3vw, 32px); font-family: system-ui, sans-serif; }
+    main { max-width: 1056px; margin-inline: auto; }
+  </style>
+<style>
+.mcmaster-tithe {
+  --tithe-maroon: #7a003c;
+  --tithe-gold: #fdbf57;
+  --tithe-ink: #231f20;
+  --tithe-muted: #62555c;
+  --tithe-rule: #e1d7dc;
+  --tithe-paper: #fff;
+  --tithe-rose: #f7ebf0;
+  --tithe-tier1: #e4bacd;
+  --tithe-tier2: #ab4e76;
+  --tithe-tier3: var(--tithe-maroon);
+  --tithe-tier4: #450323;
+  --tithe-flat: #495965;
+  min-width: 0;
+  max-width: 100%;
+  font-family: inherit;
+  line-height: 1.5;
+}
+.mcmaster-tithe, .mcmaster-tithe *, .mcmaster-tithe *::before, .mcmaster-tithe *::after { box-sizing: border-box; }
+.mcmaster-tithe [hidden] { display: none !important; }
+.mcmaster-tithe:not([data-tithe-ready="true"]) > .tithe-controls,
+.mcmaster-tithe:not([data-tithe-ready="true"]) > .tithe-results,
+.mcmaster-tithe:not([data-tithe-ready="true"]) > details,
+.mcmaster-tithe[data-tithe-ready="true"] > .tithe-script-message { display: none; }
+.mcmaster-tithe button, .mcmaster-tithe input { font: inherit; }
+.mcmaster-tithe :focus-visible { outline: 3px solid #096577; outline-offset: 3px; }
+.mcmaster-tithe h2, .mcmaster-tithe h3, .mcmaster-tithe h4, .mcmaster-tithe p { margin: 0; }
+.mcmaster-tithe .tithe-title, .mcmaster-tithe .tithe-results-title { color: var(--tithe-maroon); line-height: 1.14; font-weight: 700; }
+.mcmaster-tithe .tithe-title { font-size: clamp(28px, 5vw, 46px); letter-spacing: -.035em; }
+.mcmaster-tithe .tithe-results-title { font-size: clamp(20px, 3vw, 26px); letter-spacing: -.024em; }
+.mcmaster-tithe .tithe-intro { max-width: 72ch; margin-top: 11px; font-size: 15px; line-height: 1.65; color: var(--tithe-muted); }
+.mcmaster-tithe .tithe-script-message {
+  margin-top: 16px; padding: 12px; background: var(--tithe-rose);
+  border-inline-start: 3px solid var(--tithe-maroon); color: var(--tithe-ink);
+}
+.mcmaster-tithe .tithe-controls {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 235px), 1fr));
+  align-items: start; color: var(--tithe-ink); gap: clamp(20px, 4vw, 48px); background: var(--tithe-paper);
+  border: 1px solid var(--tithe-rule); margin-top: 25px; padding: clamp(16px, 3vw, 25px);
+}
+.mcmaster-tithe .tithe-field-label { display: block; min-width: 0; }
+.mcmaster-tithe .tithe-control-label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 7px; }
+.mcmaster-tithe .tithe-money-field { display: flex; align-items: center; border: 1px solid #b4a2aa; min-height: 49px; border-radius: 3px; }
+.mcmaster-tithe .tithe-money-field:focus-within { outline: 3px solid #096577; outline-offset: 2px; }
+.mcmaster-tithe .tithe-money-field span { padding-left: 13px; color: var(--tithe-maroon); font-size: 18px; font-weight: 700; }
+.mcmaster-tithe .tithe-money-field input {
+  width: 100%; min-width: 0; border: 0; padding: 8px 12px 8px 7px; outline: 0;
+  background: transparent; color: var(--tithe-maroon); font-size: 21px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.mcmaster-tithe .tithe-money-field:has([aria-invalid="true"]) { border-color: #9c273b; }
+.mcmaster-tithe .tithe-input-message { margin-top: 7px; color: #861632; font-size: 12px; line-height: 1.45; }
+.mcmaster-tithe .tithe-examples { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.mcmaster-tithe .tithe-example {
+  letter-spacing: normal; text-transform: none; line-height: 1.3;
+  appearance: none; background: var(--tithe-paper); color: var(--tithe-maroon); border: 1px solid #c8a3b4;
+  border-radius: 3px; padding: 6px 10px; min-height: 37px; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.mcmaster-tithe .tithe-example:hover, .mcmaster-tithe .tithe-example[aria-pressed="true"] { background: var(--tithe-rose); border-color: var(--tithe-maroon); }
+.mcmaster-tithe .tithe-range { width: 100%; height: 43px; margin: 0; accent-color: var(--tithe-maroon); cursor: pointer; }
+.mcmaster-tithe .tithe-range-extents, .mcmaster-tithe .tithe-axis { display: flex; justify-content: space-between; color: var(--tithe-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.mcmaster-tithe .tithe-range-extents { margin-top: -2px; }
+.mcmaster-tithe .tithe-range-note { margin-top: 8px; color: var(--tithe-muted); font-size: 11px; }
+.mcmaster-tithe .tithe-results { margin-top: 28px; }
+.mcmaster-tithe .tithe-section-head { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 7px 20px; }
+.mcmaster-tithe .tithe-peer-toggle { display: flex; align-items: center; gap: 8px; padding-block: 3px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.mcmaster-tithe .tithe-peer-toggle input { width: 17px; height: 17px; accent-color: var(--tithe-maroon); margin: 0; }
+.mcmaster-tithe .tithe-fee-note { margin-top: 7px; font-size: 13px; line-height: 1.6; color: var(--tithe-muted); }
+.mcmaster-tithe .tithe-comparison {
+  display: flex; justify-content: space-between; align-items: center; gap: 5px 18px; flex-wrap: wrap;
+  margin-top: 14px; padding: 10px 13px; background: var(--tithe-rose); border-inline-start: 3px solid var(--tithe-maroon);
+  color: var(--tithe-maroon); font-size: 13px; font-weight: 700;
+}
+.mcmaster-tithe .tithe-difference { font-size: clamp(16px, 3vw, 20px); font-variant-numeric: tabular-nums; }
+.mcmaster-tithe .tithe-model { margin-top: 16px; }
+.mcmaster-tithe .tithe-model-head {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+  gap: 2px 12px; margin-bottom: 5px;
+}
+.mcmaster-tithe .tithe-model-name { font-size: 13px; line-height: 1.4; font-weight: 700; }
+.mcmaster-tithe .tithe-model-amount { font-size: 15px; line-height: 1.35; font-weight: 700; font-variant-numeric: tabular-nums; }
+.mcmaster-tithe .tithe-new-model .tithe-model-head { color: var(--tithe-maroon); }
+.mcmaster-tithe .tithe-track {
+  position: relative; display: flex; height: 25px; background: #eee8eb; overflow: hidden;
+  border-radius: 2px;
+}
+.mcmaster-tithe .tithe-segment {
+  flex: 0 0 auto; width: 0; height: 100%; min-width: 0; overflow: hidden;
+  container-type: inline-size; background: var(--tithe-segment); color: var(--tithe-segment-text, white);
+  transition: width .22s ease-out;
+}
+.mcmaster-tithe .tithe-segment-label {
+  display: grid; height: 100%; place-items: center; box-shadow: inset -1px 0 rgba(255,255,255,.55);
+  font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+@container (max-width: 35px) {
+  .mcmaster-tithe .tithe-segment-label { color: transparent; }
+}
+.mcmaster-tithe .tithe-tier1 { --tithe-segment: var(--tithe-tier1); --tithe-segment-text: #33081d; }
+.mcmaster-tithe .tithe-tier2 { --tithe-segment: var(--tithe-tier2); }
+.mcmaster-tithe .tithe-tier3 { --tithe-segment: var(--tithe-tier3); }
+.mcmaster-tithe .tithe-tier4 { --tithe-segment: var(--tithe-tier4); }
+.mcmaster-tithe .tithe-fee { --tithe-segment: var(--tithe-gold); --tithe-segment-text: #422700; }
+.mcmaster-tithe .tithe-flat { --tithe-segment: var(--tithe-flat); }
+.mcmaster-tithe .tithe-axis { gap: 4px; margin-top: 8px; border-top: 1px solid #b9aab2; padding-top: 5px; }
+.mcmaster-tithe .tithe-legend { list-style: none; display: flex; gap: 6px 16px; flex-wrap: wrap; padding: 0; margin: 14px 0 0; }
+.mcmaster-tithe .tithe-legend li { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--tithe-muted); }
+.mcmaster-tithe .tithe-swatch { display: inline-block; flex: 0 0 10px; width: 10px; height: 10px; background: var(--tithe-segment); }
+.mcmaster-tithe .tithe-peer-note { margin-top: 12px; color: var(--tithe-muted); font-size: 12px; line-height: 1.55; }
+.mcmaster-tithe details { margin-top: 20px; border-block: 1px solid var(--tithe-rule); }
+.mcmaster-tithe summary { cursor: pointer; color: var(--tithe-maroon); font-size: 14px; font-weight: 700; padding-block: 12px; }
+.mcmaster-tithe .tithe-detail-intro { font-size: 12px; line-height: 1.65; color: var(--tithe-muted); padding-bottom: 9px; }
+.mcmaster-tithe .tithe-breakdowns { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px 25px; padding-bottom: 15px; }
+.mcmaster-tithe table, .mcmaster-tithe caption { font-family: inherit; }
+.mcmaster-tithe table { border-collapse: collapse; width: 100%; margin: 0; font-size: 12px; font-variant-numeric: tabular-nums; }
+.mcmaster-tithe caption { text-align: left; font-size: 13px; font-weight: 700; color: var(--tithe-maroon); padding-block: 0 6px; }
+.mcmaster-tithe th, .mcmaster-tithe td { padding: 6px 4px; text-align: left; border-bottom: 1px solid var(--tithe-rule); }
+.mcmaster-tithe thead th { background: var(--tithe-rose); font-weight: 700; }
+.mcmaster-tithe tbody th { font-weight: 400; }
+.mcmaster-tithe td:last-child, .mcmaster-tithe th:last-child { text-align: right; white-space: nowrap; }
+.mcmaster-tithe .tithe-bracket-swatch { margin-right: 5px; }
+.mcmaster-tithe tfoot th, .mcmaster-tithe tfoot td { font-weight: 700; color: var(--tithe-maroon); }
+.mcmaster-tithe tfoot tr:last-child th, .mcmaster-tithe tfoot tr:last-child td { border-bottom: 0; }
+.mcmaster-tithe .tithe-note { margin-top: 13px; color: var(--tithe-muted); font-size: 11px; line-height: 1.6; }
+.mcmaster-tithe .tithe-status {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+@media (max-width: 620px) {
+  .mcmaster-tithe .tithe-controls { gap: 17px; margin-top: 18px; }
+  .mcmaster-tithe .tithe-results { margin-top: 23px; }
+}
+@media (pointer: coarse) {
+  .mcmaster-tithe .tithe-example, .mcmaster-tithe .tithe-peer-toggle, .mcmaster-tithe summary { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mcmaster-tithe .tithe-segment { transition: none; }
+}
+</style>
+</head>
+<body>
+<main>
+<section class="mcmaster-tithe" aria-label="Interactive Tithe Model">
+  <h2 class="tithe-title">Interactive Tithe Model</h2>
+  <p class="tithe-intro">Enter your annual billings to compare the Current Model and the 2027–28 Academic Year Model.</p>
+  <p class="tithe-script-message">The interactive chart needs JavaScript to display results.</p>
+
+  <section class="tithe-controls" aria-label="Annual billing controls">
+    <div>
+      <label class="tithe-field-label">
+        <span class="tithe-control-label">Annual billings (CAD)</span>
+        <span class="tithe-money-field">
+          <span aria-hidden="true">$</span>
+          <input data-tithe-part="billings" type="text" value="700,000" inputmode="decimal" autocomplete="off" spellcheck="false">
+        </span>
+      </label>
+      <p class="tithe-input-message" data-tithe-part="billing-message" hidden></p>
+      <div class="tithe-examples" aria-label="Examples from the briefing">
+        <button type="button" class="tithe-example" data-billings="365000">Try $365,000</button>
+        <button type="button" class="tithe-example" data-billings="700000">Try $700,000</button>
+      </div>
+    </div>
+    <div>
+      <label class="tithe-field-label">
+        <span class="tithe-control-label">Adjust annual billings</span>
+        <input class="tithe-range" data-tithe-part="billing-range" type="range" min="0" max="2000000" step="1" value="700000">
+      </label>
+      <div class="tithe-range-extents" aria-hidden="true"><span>$0</span><span>$2,000,000</span></div>
+      <p class="tithe-range-note" data-tithe-part="range-note">Use the billing field for amounts above $2,000,000.</p>
+    </div>
+  </section>
+
+  <section class="tithe-results" aria-label="Estimated Annual Amounts">
+    <div class="tithe-section-head">
+      <h3 class="tithe-results-title">Estimated Annual Amounts</h3>
+      <label class="tithe-peer-toggle"><input data-tithe-part="show-peers" type="checkbox"> Compare Ottawa and London</label>
+    </div>
+    <p class="tithe-fee-note">Both McMaster models include the $7,000 annual membership fee.</p>
+    <div class="tithe-comparison">
+      <span>2027–28 Compared With Current</span>
+      <strong class="tithe-difference" data-tithe-part="difference"></strong>
+    </div>
+    <div data-tithe-part="models"></div>
+    <div class="tithe-axis" data-tithe-part="axis" aria-hidden="true"></div>
+    <ul class="tithe-legend" aria-label="Bar segments">
+      <li><span class="tithe-swatch tithe-tier1" aria-hidden="true"></span>Bracket 1</li>
+      <li><span class="tithe-swatch tithe-tier2" aria-hidden="true"></span>Bracket 2</li>
+      <li><span class="tithe-swatch tithe-tier3" aria-hidden="true"></span>Bracket 3</li>
+      <li><span class="tithe-swatch tithe-tier4" aria-hidden="true"></span>Bracket 4</li>
+      <li><span class="tithe-swatch tithe-fee" aria-hidden="true"></span>McMaster membership fee</li>
+    </ul>
+    <p class="tithe-peer-note" data-tithe-part="peer-note" hidden>The comparison uses the same entered amount as income subject to each model. Ottawa applies 10% to all professional income. London uses progressive rates. Income included can differ by institution.</p>
+    <p class="tithe-status" role="status" data-tithe-part="live-result"></p>
+  </section>
+
+  <details>
+    <summary>View Brackets and Calculations</summary>
+    <p class="tithe-detail-intro">Each rate applies only to earnings in its bracket. The 2027–28 top bracket starts at $547,846 in whole dollars. Amounts are rounded to the nearest cent.</p>
+    <div class="tithe-breakdowns" data-tithe-part="breakdowns"></div>
+  </details>
+
+  <p class="tithe-note">Illustrative estimates in Canadian dollars. Calculations run locally in your browser.</p>
+</section>
+
+<script>
+(() => {
+  "use strict";
+
+  // Limits are in dollars. Rates are in basis points (100 basis points = 1%).
+  const MEMBERSHIP_FEE = 7_000;
+  const MODELS = [
+    {
+      key: "current", name: "Current Model", fee: MEMBERSHIP_FEE,
+      brackets: [
+        { upper: 75_000, rate: 250, label: "First $75,000", colour: "tier1" },
+        { upper: 150_000, rate: 500, label: "Next $75,000", colour: "tier2" },
+        { upper: 448_333, rate: 750, label: "Next $298,333", colour: "tier3" },
+        { upper: Infinity, rate: 0, label: "Above $448,333", colour: "tier4" }
+      ]
+    },
+    {
+      key: "updated", name: "2027–28 Academic Year Model", fee: MEMBERSHIP_FEE,
+      brackets: [
+        { upper: 87_400, rate: 200, label: "First $87,400", colour: "tier1" },
+        { upper: 174_900, rate: 600, label: "Next $87,500", colour: "tier2" },
+        { upper: 547_845, rate: 900, label: "Next $372,945", colour: "tier3" },
+        { upper: Infinity, rate: 200, label: "Above $547,845", colour: "tier4" }
+      ]
+    },
+    {
+      key: "ottawa", name: "Ottawa", fee: 0,
+      brackets: [{ upper: Infinity, rate: 1000, label: "All professional income", colour: "flat" }]
+    },
+    {
+      key: "london", name: "London", fee: 0,
+      brackets: [
+        { upper: 100_000, rate: 500, label: "First $100,000", colour: "tier1" },
+        { upper: 150_000, rate: 900, label: "Next $50,000", colour: "tier2" },
+        { upper: 200_000, rate: 1700, label: "Next $50,000", colour: "tier3" },
+        { upper: Infinity, rate: 2500, label: "Above $200,000", colour: "tier4" }
+      ]
+    }
+  ];
+
+  const MAX_BILLING_CENTS = 10_000_000_000;
+  const DEFAULT_BILLING_CENTS = 70_000_000;
+  const cad = new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD" });
+  const inputNumber = new Intl.NumberFormat("en-CA", { maximumFractionDigits: 2 });
+  const whole = new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 });
+  const compact = new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD", notation: "compact", maximumFractionDigits: 1 });
+
+  const money = cents => cad.format(cents / 100);
+
+  function readBillings(raw) {
+    const value = raw.trim();
+    const amount = value.startsWith("$") ? value.slice(1).trimStart() : value;
+    if (!/^(?:[0-9]+|[0-9]{1,3}(?:,[0-9]{3})+)(?:[.][0-9]{0,2})?$/.test(amount)) return null;
+    const [dollars, fraction = ""] = amount.replace(/,/g, "").split(".");
+    const cents = Number(dollars) * 100 + Number(fraction.padEnd(2, "0"));
+    return Number.isSafeInteger(cents) && cents <= MAX_BILLING_CENTS ? cents : null;
+  }
+
+  function calculate(billingCents, model) {
+    let previousUpper = 0;
+    let cumulative = 0;
+    let subtotal = 0;
+    const bracketAmounts = model.brackets.map(bracket => {
+      const upper = bracket.upper * 100;
+      const eligible = Math.max(0, Math.min(billingCents, upper) - previousUpper);
+      previousUpper = upper;
+      cumulative += eligible * bracket.rate;
+      // Rounding cumulative amounts keeps the displayed segments equal to the total.
+      const rounded = Math.floor((cumulative + 5_000) / 10_000);
+      const cents = rounded - subtotal;
+      subtotal = rounded;
+      return { ...bracket, cents, rateLabel: (bracket.rate / 100) + "%" };
+    });
+    const feeCents = model.fee * 100;
+    return { bracketAmounts, subtotal, feeCents, total: subtotal + feeCents };
+  }
+
+  function chartLimit(maximumCents, includePeers) {
+    const floor = includePeers ? 15_000_000 : 6_000_000;
+    if (maximumCents <= floor) return floor;
+    const magnitude = 10 ** Math.floor(Math.log10(maximumCents));
+    return Math.ceil(maximumCents / (magnitude / 2)) * magnitude / 2;
+  }
+
+  function mountCalculator(root, index) {
+    const part = name => root.querySelector(`[data-tithe-part="${name}"]`);
+    const billingInput = part("billings");
+    const billingRange = part("billing-range");
+    const peerToggle = part("show-peers");
+    const presets = [...root.querySelectorAll(".tithe-example")];
+    const billingMessage = part("billing-message");
+    const rangeNote = part("range-note");
+    billingMessage.id = `mcmaster-tithe-${index}-billing-message`;
+    rangeNote.id = `mcmaster-tithe-${index}-range-note`;
+    billingInput.setAttribute("aria-describedby", billingMessage.id);
+    billingRange.setAttribute("aria-describedby", rangeNote.id);
+    let billingCents = DEFAULT_BILLING_CENTS;
+    let announcement;
+
+    function mountModel(model) {
+      const row = document.createElement("section");
+      row.className = model.key === "updated" ? "tithe-model tithe-new-model" : "tithe-model";
+      row.dataset.model = model.key;
+      const heading = document.createElement("div");
+      heading.className = "tithe-model-head";
+      const name = document.createElement("h4");
+      name.className = "tithe-model-name";
+      name.textContent = model.name;
+      const total = document.createElement("strong");
+      total.className = "tithe-model-amount";
+      heading.append(name, total);
+
+      const track = document.createElement("div");
+      track.className = "tithe-track";
+      track.setAttribute("aria-hidden", "true");
+      const segmentColours = model.brackets.map(bracket => bracket.colour);
+      if (model.fee) segmentColours.push("fee");
+      const segments = segmentColours.map(colour => {
+        const segment = document.createElement("div");
+        segment.className = "tithe-segment tithe-" + colour;
+        const caption = document.createElement("span");
+        caption.className = "tithe-segment-label";
+        segment.append(caption);
+        track.append(segment);
+        return { segment, caption };
+      });
+      row.append(heading, track);
+      part("models").append(row);
+
+      const table = document.createElement("table");
+      table.dataset.model = model.key;
+      const caption = table.createCaption();
+      caption.textContent = model.name;
+      const header = table.createTHead().insertRow();
+      for (const label of ["Earnings bracket", "Rate", "Tithe"]) {
+        const th = document.createElement("th");
+        th.scope = "col";
+        th.textContent = label;
+        header.append(th);
+      }
+      const tbody = table.createTBody();
+      const amounts = model.brackets.map(bracket => {
+        const row = tbody.insertRow();
+        const th = document.createElement("th");
+        th.scope = "row";
+        const swatch = document.createElement("span");
+        swatch.className = "tithe-swatch tithe-bracket-swatch tithe-" + bracket.colour;
+        swatch.setAttribute("aria-hidden", "true");
+        th.append(swatch, bracket.label);
+        row.append(th);
+        row.insertCell().textContent = (bracket.rate / 100) + "%";
+        return row.insertCell();
+      });
+      const tfoot = table.createTFoot();
+      function totalRow(label) {
+        const row = tfoot.insertRow();
+        const th = document.createElement("th");
+        th.scope = "row";
+        th.colSpan = 2;
+        th.textContent = label;
+        row.append(th);
+        return row.insertCell();
+      }
+      const subtotal = model.fee ? totalRow("Tithe subtotal") : null;
+      const fee = model.fee ? totalRow("Annual membership fee") : null;
+      const combined = totalRow("Estimated total");
+      part("breakdowns").append(table);
+      return { row, total, segments, table, amounts, subtotal, fee, combined };
+    }
+
+    const views = MODELS.map(mountModel);
+    const ticks = Array.from({ length: 5 }, () => part("axis").appendChild(document.createElement("span")));
+
+    function render() {
+      const includePeers = peerToggle.checked;
+      const totals = MODELS.map(model => calculate(billingCents, model));
+      const max = chartLimit(Math.max(...totals.slice(0, includePeers ? 4 : 2).map(result => result.total)), includePeers);
+
+      for (const [index, result] of totals.entries()) {
+        const view = views[index];
+        view.row.hidden = view.table.hidden = index > 1 && !includePeers;
+        view.total.textContent = view.combined.textContent = money(result.total);
+        result.bracketAmounts.forEach((bracket, position) => {
+          view.amounts[position].textContent = money(bracket.cents);
+        });
+        const parts = result.bracketAmounts.map(bracket => ({
+          label: bracket.label, rate: bracket.rateLabel, cents: bracket.cents
+        }));
+        if (result.feeCents) {
+          parts.push({ label: "Annual membership fee", rate: "Fee", cents: result.feeCents });
+          view.subtotal.textContent = money(result.subtotal);
+          view.fee.textContent = money(result.feeCents);
+        }
+        for (const [position, part] of parts.entries()) {
+          const { segment, caption } = view.segments[position];
+          segment.style.width = (part.cents / max * 100) + "%";
+          segment.title = part.label + " · " + part.rate + " · " + money(part.cents);
+          caption.textContent = part.rate;
+        }
+      }
+
+      ticks.forEach((tick, index) => {
+        tick.textContent = compact.format(max / 100 * index / (ticks.length - 1));
+      });
+      part("peer-note").hidden = !includePeers;
+      const difference = totals[1].total - totals[0].total;
+      const comparison = difference === 0 ? "Same estimated amount" :
+        money(Math.abs(difference)) + (difference > 0 ? " more" : " less");
+      part("difference").textContent = comparison;
+
+      for (const preset of presets) {
+        preset.setAttribute("aria-pressed", String(Number(preset.dataset.billings) * 100 === billingCents));
+      }
+
+      clearTimeout(announcement);
+      announcement = setTimeout(() => {
+        let summary = "At " + money(billingCents) + " in billings, Current Model " + money(totals[0].total) +
+          ", 2027–28 Academic Year Model " + money(totals[1].total) + ". " + comparison + ".";
+        if (includePeers) summary += " Ottawa " + money(totals[2].total) + ", London " + money(totals[3].total) + ".";
+        part("live-result").textContent = summary;
+      }, 400);
+    }
+
+    function updateBillings(cents, formatInput) {
+      billingCents = cents;
+      billingInput.removeAttribute("aria-invalid");
+      billingMessage.hidden = true;
+      if (formatInput) billingInput.value = inputNumber.format(cents / 100);
+      billingRange.value = String(Math.min(Number(billingRange.max), Math.round(cents / 100)));
+      billingRange.setAttribute("aria-valuetext", whole.format(Number(billingRange.value)) + " in annual billings");
+      render();
+    }
+
+    billingInput.addEventListener("input", () => {
+      const cents = readBillings(billingInput.value);
+      if (cents === null) {
+        billingInput.setAttribute("aria-invalid", "true");
+        billingMessage.textContent = "Enter an amount from $0 to $100,000,000. The chart shows your last valid entry of " + money(billingCents) + ".";
+        billingMessage.hidden = false;
+      } else {
+        updateBillings(cents, false);
+      }
+    });
+    billingInput.addEventListener("blur", () => {
+      const cents = readBillings(billingInput.value);
+      if (cents !== null) billingInput.value = inputNumber.format(cents / 100);
+    });
+    billingInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") billingInput.blur();
+    });
+    billingRange.addEventListener("input", () => updateBillings(Number(billingRange.value) * 100, true));
+    for (const preset of presets) {
+      preset.addEventListener("click", () => updateBillings(Number(preset.dataset.billings) * 100, true));
+    }
+    peerToggle.addEventListener("change", render);
+    updateBillings(DEFAULT_BILLING_CENTS, true);
+  }
+
+  function initialize() {
+    document.querySelectorAll(".mcmaster-tithe").forEach((root, index) => {
+      if (root.dataset.titheReady === "true") return;
+      mountCalculator(root, index);
+      root.dataset.titheReady = "true";
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initialize, { once: true });
+  } else {
+    initialize();
+  }
+})();
+</script>
+</main>
+</body>
+</html>
